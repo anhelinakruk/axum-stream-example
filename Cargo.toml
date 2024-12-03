@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = { path = "../../axum" }
-axum-extra = { path = "../../axum-extra", features = ["typed-header"] }
+axum = "0.7"
+axum-extra = { version = "0.9.5", features = ["typed-header"] }
 futures = "0.3"
 headers = "0.4"
 tokio = { version = "1.0", features = ["full"] }

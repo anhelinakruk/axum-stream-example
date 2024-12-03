@@ -61,13 +61,14 @@ async fn sse_handler(
     //
     // You can also create streams from tokio channels using the wrappers in
     // https://docs.rs/tokio-stream
-    let stream = stream::repeat_with(|| Event::default().data("hi!"))
-        .map(Ok)
-        .throttle(Duration::from_secs(1));
+
+    let vec = vec![1, 2, 3];
+    let stream =
+        stream::iter(vec).map(|value| Ok(Event::default().data(format!("Value: {}", value))));
 
     Sse::new(stream).keep_alive(
         axum::response::sse::KeepAlive::new()
-            .interval(Duration::from_secs(1))
+            .interval(Duration::from_secs(25))
             .text("keep-alive-text"),
     )
 }
@@ -104,16 +105,22 @@ mod tests {
             .unwrap()
             .bytes_stream()
             .eventsource()
-            .take(1);
+            .take(3);
 
         let mut event_data: Vec<String> = vec![];
+        let mut count = 0;
+        let max_events = 3;
         while let Some(event) = event_stream.next().await {
             match event {
                 Ok(event) => {
-                    // break the loop at the end of SSE stream
-                    if event.data == "[DONE]" {
+                    println!("NEW EVENT");
+                    count += 1;
+
+                    if count > max_events {
                         break;
                     }
+
+                    println!("event: {:?}", event.data);
 
                     event_data.push(event.data);
                 }
@@ -123,6 +130,7 @@ mod tests {
             }
         }
 
-        assert!(event_data[0] == "hi!");
+        println!("{:?}", event_data);
+        assert_eq!(event_data, vec!["Value: 1", "Value: 2", "Value: 3"]);
     }
 }
